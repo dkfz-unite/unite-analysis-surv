@@ -1,4 +1,8 @@
+.vscode
+.venv
+.DB_Store
 __pycache__
-.pytest_cache
 data
 !test/data
+.DS_Store
+.pytest_cache
