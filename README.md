@@ -1,7 +1,7 @@
-# Unite Kaplan-Maier Survival Estimation Analysis Service
+# Unite Kaplan-Meier Survival Estimation Analysis Service
 
 ## General
-[Kaplan-Maier](https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator) survival estimation analysis service wrapperd with web API.
+[Kaplan-Meier](https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator) survival estimation analysis service wrapperd with web API.
 
 
 ## Configuration
@@ -18,13 +18,13 @@ To configure the application, change environment variables as required in [comma
 ### Docker Compose
 The easiest way to install the application is to use docker-compose:
 - Environment configuration and installation scripts: https://github.com/dkfz-unite/unite-environment
-- Survival estimation analysis service configuration and installation scripts: https://github.com/dkfz-unite/unite-environment/tree/main/applications/unite-analysis-kaplanmeier
+- Survival estimation analysis service configuration and installation scripts: https://github.com/dkfz-unite/unite-environment/tree/main/applications/unite-analysis-kmeier
 
 ### Docker
 [Dockerfile](Dockerfile) is used to build an image of the application.
 To build an image run the following command:
 ```
-docker build -t unite.analysis.don-km:latest .
+docker build -t unite.analysis.kmeier:latest .
 ```
 
 All application components should run in the same docker network.
@@ -36,15 +36,15 @@ docker network create unite
 To run application in docker run the following command:
 ```bash
 docker run \
---name unite.analysis.don-km \
+--name unite.analysis.kmeier \
 --restart unless-stopped \
 --net unite \
---net-alias don-km.analysis.unite.net \
+--net-alias kmeier.analysis.unite.net \
 -p 127.0.0.1:5304:80 \
 -e ASPNETCORE_ENVIRONMENT=Release \
 -v ./data:/mnt/data:rw \
 -d \
-unite.analysis.don-km:latest
+unite.analysis.kmeier:latest
 ```
 
 
@@ -88,5 +88,5 @@ This will invoke the command `python` with the arguments `app.py {data}/{proc}` 
 ### Analysis
 Analysis will perform the following steps:
 - Read input data from the input.tsv file.
-- Perform Kaplan-Maier survival estimation analysis.
+- Perform Kaplan-Meier survival estimation analysis.
 - Write resulting data to `results.tsv` file.
