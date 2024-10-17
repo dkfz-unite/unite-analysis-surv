@@ -1,7 +1,7 @@
 # Unite Kaplan-Maier Survival Estimation Analysis Service
 
 ## General
-[Kaplan-maier](https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator) survival estimation analysis service wrapperd with web API.
+[Kaplan-Maier](https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator) survival estimation analysis service wrapperd with web API.
 
 
 ## Configuration
