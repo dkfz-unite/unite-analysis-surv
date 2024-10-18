@@ -21,4 +21,4 @@ ENV UNITE_SOURCE_PATH="/src"
 ENV UNITE_DATA_PATH="/mnt/data"
 ENV UNITE_PROCESS_LIMIT="10"
 EXPOSE 80
-CMD ["/app/Unite.Commands.Web", "--urls", "http://0.0.0.0:80"]
+CMD ["/app/commands", "--urls", "http://0.0.0.0:80"]
