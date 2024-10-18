@@ -30,6 +30,6 @@ jobs:
           build-args: |
             USER=${{ github.actor }}
             TOKEN=${{ secrets.GITHUB_TOKEN }}
-          platform: linux/amd64
+          platforms: linux/amd64
           push: true
           tags: ${{env.REGISTRY}}/${{github.repository}}
