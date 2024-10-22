@@ -20,14 +20,16 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - name: Publish commands web app
-        run: dotnet publish Unite.Commands.Web -c Release -r linux-x64 -o ./publish -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:DebugType=None --self-contained
-      - name: Rename commands web app
-        run: mv ./publish/Unite.Commands.Web ./publish/commands
+        run: sh publish-linux-x64.sh
+      # - name: Publish commands web app
+      #   run: dotnet publish Unite.Commands.Web -c Release -r linux-x64 -o ./publish/linux-x64 -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:DebugType=None --self-contained
+      # - name: Rename commands web app
+      #   run: mv ./publish/linux-x64/Unite.Commands.Web ./publish/linux-x64/commands
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app
-          path: ./publish
+          path: ./publish/linux-x64
     
   build-and-push-image:
     needs: build-and-publish-app
@@ -45,8 +47,8 @@ jobs:
         with:
           name: app
           path: ./app
-      - name: ls
-        run: ls -l ./app
+      - name: Make executable
+        run: cmod a+rx ./app/commands
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
