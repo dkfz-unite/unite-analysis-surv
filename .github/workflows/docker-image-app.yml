@@ -48,7 +48,7 @@ jobs:
           name: app
           path: ./app
       - name: Make executable
-        run: cmod a+rx ./app/commands
+        run: chmod a+rx ./app/commands
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
