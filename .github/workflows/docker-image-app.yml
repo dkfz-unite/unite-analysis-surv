@@ -1,4 +1,4 @@
-name: Publish Docker Image
+name: Publish Docker Image App
 
 on:
   push:
@@ -32,6 +32,7 @@ jobs:
 
     
   build-and-push-image:
+    needs: build-and-publish-app
     runs-on: ubuntu-latest
     permissions:
       contents: read
