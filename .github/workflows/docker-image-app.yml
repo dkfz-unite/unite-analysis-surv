@@ -12,20 +12,17 @@ jobs:
   build-and-publish-app:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           repository: dkfz-unite/unite-commands
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 8.0.x
-      - name: Publish commands web app
+      - name: Publish web app
         run: sh publish-linux-x64.sh
-      # - name: Publish commands web app
-      #   run: dotnet publish Unite.Commands.Web -c Release -r linux-x64 -o ./publish/linux-x64 -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:DebugType=None --self-contained
-      # - name: Rename commands web app
-      #   run: mv ./publish/linux-x64/Unite.Commands.Web ./publish/linux-x64/commands
-      - name: Upload artifact
+      - name: Upload published artifacts
         uses: actions/upload-artifact@v4
         with:
           name: app
@@ -40,14 +37,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Remove old app
+      - name: Remove old web app
         run: rm -r app
-      - name: Copy new app
+      - name: Copy new web app
         uses: actions/download-artifact@v4
         with:
           name: app
           path: ./app
-      - name: Make executable
+      - name: Make web app executable
         run: chmod a+rx ./app/commands
       - name: Log in to the Container registry
         uses: docker/login-action@v3
