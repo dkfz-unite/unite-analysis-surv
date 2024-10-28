@@ -1,5 +1,5 @@
-sample_id	diagnosis_date	vital_status	vital_status_change_date	vital_status_change_day	progression_status	progression_status_change_date	progression_status_change_day	label
-Donor1	2020-01-01	true	2021-01-01		false	2021-01-01		A
-Donor2	2020-01-01	false	2021-01-01		true		 366	 B
-Donor3	2020-01-01	true	2021-01-01		true	2021-01-01		B
-Donor4	2020-01-01	false	2021-01-01		true	2021-01-01		B
+sample_id	diagnosis_date	status	status_change_date	status_change_day	label
+Donor1	2020-01-01	true	2021-01-01		A
+Donor2	2020-01-01	false	2021-01-01	 366	B
+Donor3	2020-01-01	true	2021-01-01		B
+Donor4	2020-01-01	false	2021-01-01		B

@@ -6,9 +6,10 @@ from app import estimate_survival_function
 import pytest
 from unittest.mock import patch
 import pandas as pd
-from app import get_survival_days_from_dates, get_survival_days_from_days, get_survival_days, load_data, get_censored_df, get_survival_columns, get_exit_status, get_labels,get_subsets,  logrank_test, main
+from app import read_options_file,get_survival_days_from_dates, get_survival_days_from_days, get_survival_days, load_data, get_censored_df, get_exit_status, get_labels,get_subsets,  logrank_test, main
 import numpy as np
 import os
+from collections import Counter
 
 @pytest.fixture
 def mock_survival_data():
@@ -21,12 +22,9 @@ def mock_survival_data():
 def mock_data_df():
     data = pd.DataFrame({
         "diagnosis_date": ["2020-01-01", "2020-02-01", "2020-03-01"],
-        "vital_status_change_date": ["2020-01-10", None, "2020-03-15"],
-        "vital_status_change_day": [9, 20, 14],
-        "vital_status": [False, True, False],
-        "progression_status": [True, False, True],
-        "progression_status_change_date": ["2020-01-10", None, "2020-03-15"],
-        "progression_status_change_day": [9, 20, 14],
+        "status_change_date": ["2020-01-10", None, "2020-03-15"],
+        "status_change_day": [9, 20, 14],
+        "status": [False, True, False],
         "label": ["A", "B", "A"],
         "sample_id": ["1", "2", "3"]
     })
@@ -47,9 +45,9 @@ def test_load_data():
      # Check if the DataFrame is not empty
      assert not data.empty
      # Check if the DataFrame has the correct number of columns
-     assert len(data.columns) == 9
+     assert len(data.columns) == 6
      # Check if the DataFrame has the correct columns
-     expected_columns = ["sample_id","diagnosis_date","vital_status","vital_status_change_date","vital_status_change_day","progression_status","progression_status_change_date","progression_status_change_day","label"]
+     expected_columns = ["sample_id","diagnosis_date","status","status_change_date","status_change_day","label"]
      assert list(data.columns) == expected_columns
 
 def test_get_labels(mock_data_df):
@@ -71,10 +69,11 @@ def test_get_subsets(mock_data_df):
     # check the subsets are as expected
     assert subsets[0].equals(mock_data_df.iloc[np.array(mock_data_df.label=="A"),:])
     assert subsets[1].equals(mock_data_df.iloc[np.array(mock_data_df.label=="B"),:])
-
-@pytest.mark.parametrize("census_date_column", ["progression_status_change_date", "vital_status_change_date"])
-def test_get_survival_days_from_dates(mock_data_df,census_date_column):
-    survival_days, success = get_survival_days_from_dates(mock_data_df,census_date_column)
+    # check the unique labels are as expected
+    assert Counter(unique_labels) == Counter(["A","B"])
+    
+def test_get_survival_days_from_dates(mock_data_df):
+    survival_days, success = get_survival_days_from_dates(mock_data_df)
     
     # Check if the result is a Series
     assert isinstance(survival_days, pd.Series)
@@ -91,15 +90,14 @@ def test_get_survival_days_from_dates(mock_data_df,census_date_column):
     # try on truncated data
     trunc_data = mock_data_df.copy()
     trunc_data = trunc_data.iloc[[False, True, True],:]
-    survival_days, success = get_survival_days_from_dates(trunc_data,census_date_column)
+    survival_days, success = get_survival_days_from_dates(trunc_data)
     expected_survival_days = pd.Series([None, 14],index=[1,2])
     pd.testing.assert_series_equal(survival_days, expected_survival_days)
     expected_success = pd.Series([False, True],index=[1,2])
     pd.testing.assert_series_equal(success, expected_success)
 
-@pytest.mark.parametrize("census_day_column", ["progression_status_change_day", "vital_status_change_day"])
-def test_get_survival_days_from_days(mock_data_df,census_day_column):
-    survival_days, success = get_survival_days_from_days(mock_data_df,census_day_column)
+def test_get_survival_days_from_days(mock_data_df):
+    survival_days, success = get_survival_days_from_days(mock_data_df)
     
     # Check if the result is a Series
     assert isinstance(survival_days, pd.Series)
@@ -116,15 +114,15 @@ def test_get_survival_days_from_days(mock_data_df,census_day_column):
     # try on truncated data (i.e. after subsetting)
     trunc_data = mock_data_df.copy()
     trunc_data = trunc_data.iloc[[False, True, True],:]
-    survival_days, success = get_survival_days_from_days(trunc_data,census_day_column)
+    survival_days, success = get_survival_days_from_days(trunc_data)
     expected_survival_days = pd.Series([20, 14],index=[1,2],name="survival_days",dtype=float)
     pd.testing.assert_series_equal(survival_days, expected_survival_days)
     expected_success = pd.Series([True, True],index=[1,2],name="survival_days")
 
-@pytest.mark.parametrize("type", ["progress", "vital"])
-def test_get_survival_days(mock_data_df,type):
 
-    survival_days = get_survival_days(mock_data_df,type)
+def test_get_survival_days(mock_data_df):
+
+    survival_days = get_survival_days(mock_data_df)
     
     # Check if the result is a Series
     assert isinstance(survival_days, pd.Series)
@@ -135,10 +133,10 @@ def test_get_survival_days(mock_data_df,type):
      
     # try on truncated data (i.e. after subsetting)
     trunc_data = mock_data_df.copy()
-    survival_days = get_survival_days(trunc_data,type)
+    survival_days = get_survival_days(trunc_data)
     expected_survival_days = pd.Series([20, 14],index=[1,2],name="survival_days",dtype=float)
 
-@pytest.mark.parametrize("type", ["progress", "vital"])
+@pytest.mark.parametrize("type", ["progression", "survival"])
 def test_get_exit_status(mock_data_df,type):
     exit_status = get_exit_status(mock_data_df,type)
     
@@ -146,10 +144,10 @@ def test_get_exit_status(mock_data_df,type):
     assert isinstance(exit_status, pd.Series)
     
     # Check if the Series has the correct values
-    if type == "progress":
-        expected_exit_status = pd.Series([True, False, True],name="progression_status",dtype=bool)
-    if type == "vital":
-        expected_exit_status = pd.Series([True, False, True],name="vital_status",dtype=bool)
+    if type == "progression":
+        expected_exit_status = pd.Series([False, True, False],name="status",dtype=bool)
+    if type == "survival":
+        expected_exit_status = pd.Series([True, False, True],name="status",dtype=bool)
     pd.testing.assert_series_equal(exit_status, expected_exit_status)
     
 
@@ -167,7 +165,7 @@ def test_estimate_survival_function(mock_survival_data):
     # Check if the DataFrame is not empty
     assert not result.empty
     # Check if the DataFrame has the correct number of rows
-    assert len(result) == len(survival.unique())
+    assert len(result) == (len(survival.unique())+1)
 
 # test for get_censored_df
 @pytest.fixture
@@ -197,16 +195,12 @@ def test_get_censored_df(mock_data_for_censored):
     }, index=[1, 3])
     pd.testing.assert_frame_equal(result, expected_data)
 
-@pytest.mark.parametrize("type", ["progress", "vital"])
-def test_get_survival_columns(type):
-    result = get_survival_columns(type)
-    if type == "progress":
-        expected_columns = ("progression_status_change_date","progression_status_change_day")
-    if type == "vital":
-        expected_columns = ("vital_status_change_date","vital_status_change_day")
-    assert result == expected_columns   
+@pytest.fixture
+def mode():
+    return "progression"
 
-
+#@pytest.mark.parametrize("mode", ["progression", "survival"])
+@patch("app.read_options_file")
 @patch("app.load_data")
 @patch("app.get_labels")
 @patch("app.get_subsets")
@@ -215,10 +209,10 @@ def test_get_survival_columns(type):
 @patch("app.get_survival_function_and_censored_dfs")
 @patch("app.logrank_test")
 @patch("app.pd.DataFrame.to_csv")
-def test_main(mock_to_csv, mock_logrank_test, mock_get_survival_function_and_censored_dfs, mock_get_exit_status, mock_get_survival_days, mock_get_subsets, mock_get_labels, mock_load_data, mock_data_df, tmp_path):
+def test_main(mock_to_csv, mock_logrank_test, mock_get_survival_function_and_censored_dfs, mock_get_exit_status, mock_get_survival_days, mock_get_subsets, mock_get_labels, mock_load_data,mock_read_options_file, mock_data_df, tmp_path,mode):
     # Mock the load_data function to return the mock data
     mock_load_data.return_value = mock_data_df
-    
+
     # Mock the get_labels function to return the labels
     mock_get_labels.return_value = mock_data_df.label
     
@@ -237,12 +231,14 @@ def test_main(mock_to_csv, mock_logrank_test, mock_get_survival_function_and_cen
         (pd.DataFrame({"time": [14, 9], "survival_prob": [0.7, 0.6]}), pd.DataFrame({"sample_id": ["C"], "days_at_censoring": [14]}))
     ]
     
+    # mock the read_options_file function to return the mode
+    mock_read_options_file.return_value = {"mode":mode}
     # Mock the logrank_test function to return a DataFrame
     mock_logrank_test.return_value = pd.DataFrame({"test_statistic": [1.23], "p_value": [0.45]})
     
     
     # Call the main function
-    main(str(tmp_path), "vital")
+    main(str(tmp_path))
     
     # Check if the load_data function was called
     mock_load_data.assert_called_once_with(os.path.join(str(tmp_path), "input.tsv"))
@@ -263,17 +259,15 @@ def test_main(mock_to_csv, mock_logrank_test, mock_get_survival_function_and_cen
     assert mock_get_survival_function_and_censored_dfs.call_count == 2
     
     # Check if the to_csv function was called for each survival function and censored data frame
-    assert mock_to_csv.call_count == 5
+    assert mock_to_csv.call_count == 3
     
     # Check if the logrank_test function was called
     mock_logrank_test.assert_called_once()
     
     # Verify the filenames used in to_csv calls
     expected_files = [
-        os.path.join(str(tmp_path), "resultA.tsv"),
-        os.path.join(str(tmp_path), "censoredA.tsv"),
-        os.path.join(str(tmp_path), "resultB.tsv"),
-        os.path.join(str(tmp_path), "censoredB.tsv"),
+        os.path.join(str(tmp_path), "result.tsv"),
+        os.path.join(str(tmp_path), "censored.tsv"),
         os.path.join(str(tmp_path), "logrank_test.tsv")
     ]
     actual_files = [call[0][0] for call in mock_to_csv.call_args_list]
