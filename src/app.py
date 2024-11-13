@@ -112,7 +112,7 @@ def get_censored_df(survival_days : pd.Series, exit_status : pd.Series, ids : pd
     return censored_df
 
 def get_exit_status(data : pd.DataFrame,type : str) -> pd.Series:
-    """Get the exit status of all patients. If type is "vital" this should be true if they are dead and false if they are alive. If type is "progress" this should be true if they have progressed and false if they have not.
+    """Get the exit status of all patients. If type is "survival" this should be true if they are dead and false if they are alive. If type is "progression" this should be true if they have progressed and false if they have not.
 
     :param data: the input data frame
     :type data: pd.DataFrame
