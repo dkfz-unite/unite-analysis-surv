@@ -60,23 +60,24 @@ Place `input.tsv` file with input data to `{proc}` subdirectory of the `./data` 
 
 The file should have following structure:
 ```tsv
-sample_id diagnosis_date vital_status vital_status_change_date  vital_status_change_day
-sample-1  2020-01-01  true  2021-01-01
-sample-2  2020-01-01  false  2021-01-01
-sample-3  2020-01-01  true  2021-01-01
-sample-4  2020-01-01  false  2021-01-01
+dataset_id    donor_id enrolment_date status status_change_date  status_change_day
+project-1    sample-1  2020-01-01  true  2021-01-01
+project-1    sample-2  2020-01-01  false  2021-01-01
+project-1    sample-3  2020-01-01  true  2021-01-01
+project-1    sample-4  2020-01-01  false  2021-01-01
 ```
 
 Where:
-- `sample_id`* - patient identifier.
-- `diagnosis_date`* - date in format `yyyy-mm-dd`, when diagnosis was stated.
-- `vital_status`* - `true` if patient is still alive or `false` if patient has died.
-- `vital_status_change_date` - date in format `yyyy-mm-dd`, when vital status was last time revised.
-- `vital_status_change_day` - relative number of days since diagnosis statement, when vital status was last time revised.
+- `dataset_id` - dataset identifier (if comparing multiple datasets).
+- `donor_id`* - donor identifier.
+- `enrolment_date` - donor enrolment date in format `yyyy-mm-dd`.
+- `status`* - `true` is case of event (donor death or disease progression) or `false` otherwise.
+- `status_change_date` - date in format `yyyy-mm-dd`, when the status was last time revised.
+- `status_change_day` - relative number of days since enrolment, when the status was last time revised.
 
 Requirements:
 - Fields marked with `*` are required.
-- Either `vital_status_change_date` or `vital_status_change_day` must be set.
+- Either (`endolment_date` and `status_change_date`) or (`status_change_day`) must be set.
 
 ### Run The Analysis
 Send a POST request to the `localhost:5304/api/run?key={key}` endpoint, where `key` is the process key and the name of the corresponding process directory.
