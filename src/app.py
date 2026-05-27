@@ -222,7 +222,8 @@ def main(root_path : str):
        
     # perform the logrank test if there is more than one group
     if len(unique_dataset_ids) > 1:
-        logrank = logrank_test(pd.concat(survival_days),pd.concat(exit_status),dataset_id)
+        logrank_dataset_id = pd.concat([get_dataset_ids(subset) for subset in subsets], ignore_index=True)
+        logrank = logrank_test(pd.concat(survival_days, ignore_index=True),pd.concat(exit_status, ignore_index=True),logrank_dataset_id)
         logrank.to_csv(os.path.join(root_path,"logrank_test.tsv"), sep="\t", index=False)
     
 

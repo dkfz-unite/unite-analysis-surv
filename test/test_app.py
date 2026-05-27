@@ -210,7 +210,7 @@ def test_main(mock_to_csv, mock_logrank_test, mock_get_survival_function_and_cen
     mock_load_data.return_value = mock_data_df
 
     # Mock the get_dataset_ids function to return the dataset_ids
-    mock_get_dataset_ids.return_value = mock_data_df.dataset_id
+    mock_get_dataset_ids.side_effect = [mock_data_df.dataset_id, pd.Series(["A", "B"]), pd.Series(["A"])]
     
     # Mock the get_subsets function to return subsets of the data
     mock_get_subsets.return_value = ([mock_data_df.iloc[:2], mock_data_df.iloc[2:]], ["A", "B"])
@@ -238,8 +238,9 @@ def test_main(mock_to_csv, mock_logrank_test, mock_get_survival_function_and_cen
     # Check if the load_data function was called
     mock_load_data.assert_called_once_with(os.path.join(str(tmp_path), "input.tsv"))
     
-    # Check if the get_dataset_ids function was called
-    mock_get_dataset_ids.assert_called_once_with(mock_data_df)
+    # Check if the get_dataset_ids function was called for full data and each subset
+    assert mock_get_dataset_ids.call_count == 3
+    assert mock_get_dataset_ids.call_args_list[0][0][0].equals(mock_data_df)
     
     # Check if the get_subsets function was called
     mock_get_subsets.assert_called_once_with(mock_data_df, mock_data_df.dataset_id)
@@ -267,6 +268,37 @@ def test_main(mock_to_csv, mock_logrank_test, mock_get_survival_function_and_cen
     ]
     actual_files = [call[0][0] for call in mock_to_csv.call_args_list]
     assert actual_files == expected_files
+
+@patch("app.load_data")
+@patch("app.get_survival_days")
+@patch("app.get_exit_status")
+@patch("app.get_survival_function_and_censored_dfs")
+@patch("app.logrank_test")
+@patch("app.pd.DataFrame.to_csv")
+def test_main_logrank_uses_subset_ordered_dataset_ids(mock_to_csv, mock_logrank_test, mock_get_survival_function_and_censored_dfs, mock_get_exit_status, mock_get_survival_days, mock_load_data, tmp_path):
+    mock_data_df = pd.DataFrame({
+        "enrolment_date": ["2020-01-01", "2020-02-01", "2020-03-01", "2020-04-01"],
+        "status_change_date": ["2020-01-10", "2020-02-10", "2020-03-10", "2020-04-10"],
+        "status_change_day": [9, 9, 9, 9],
+        "status": [False, True, False, True],
+        "dataset_id": ["A", "B", "A", "B"],
+        "donor_id": ["1", "2", "3", "4"]
+    })
+    mock_load_data.return_value = mock_data_df
+    mock_get_survival_days.side_effect = [pd.Series([9, 11]), pd.Series([10, 12])]
+    mock_get_exit_status.side_effect = [pd.Series([False, False]), pd.Series([True, True])]
+    mock_get_survival_function_and_censored_dfs.side_effect = [
+        (pd.DataFrame({"time": [9, 11], "survival_prob": [0.9, 0.8]}), pd.DataFrame({"donor_id": ["1"], "days_at_censoring": [9]})),
+        (pd.DataFrame({"time": [10, 12], "survival_prob": [0.7, 0.6]}), pd.DataFrame({"donor_id": ["2"], "days_at_censoring": [10]}))
+    ]
+    mock_logrank_test.return_value = pd.DataFrame({"test_statistic": [1.23], "p_value": [0.45]})
+
+    main(str(tmp_path))
+
+    logrank_survival_days, logrank_exit_status, logrank_dataset_ids = mock_logrank_test.call_args[0]
+    pd.testing.assert_series_equal(logrank_survival_days, pd.Series([9, 11, 10, 12]), check_dtype=False)
+    pd.testing.assert_series_equal(logrank_exit_status, pd.Series([False, False, True, True]), check_dtype=False)
+    pd.testing.assert_series_equal(logrank_dataset_ids, pd.Series(["A", "A", "B", "B"], name="dataset_id"))
 
 def test_logrank_test(mock_survival_data):
     survival, exit_status,dataset_id = mock_survival_data
