@@ -301,7 +301,7 @@ def test_main_logrank_uses_subset_ordered_dataset_ids(mock_to_csv, mock_logrank_
     pd.testing.assert_series_equal(logrank_dataset_ids, pd.Series(["A", "A", "B", "B"], name="dataset_id"))
 
 def test_logrank_test(mock_survival_data):
-    survival, exit_status,dataset_id = mock_survival_data
+    survival, exit_status, dataset_id = mock_survival_data
     result = logrank_test(survival,exit_status,dataset_id)
     
     # Check if the result is a DataFrame
