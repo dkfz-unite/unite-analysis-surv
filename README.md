@@ -58,13 +58,17 @@ Place `input.tsv` file with input data to `{proc}` subdirectory of the `./data` 
     └── input.tsv 
 ```
 
-The file should have following structure:
+The file should have following structure (if there are multiple datasets they should be listed in contiguous blocks):
 ```tsv
 dataset_id    donor_id enrolment_date status status_change_date  status_change_day
 project-1    sample-1  2020-01-01  true  2021-01-01
 project-1    sample-2  2020-01-01  false  2021-01-01
 project-1    sample-3  2020-01-01  true  2021-01-01
 project-1    sample-4  2020-01-01  false  2021-01-01
+project-2    sample-1  2020-01-01  true  2021-01-01
+project-2    sample-2  2020-01-01  false  2021-01-01
+project-2    sample-3  2020-01-01  true  2021-01-01
+project-2    sample-4  2020-01-01  false  2021-01-01
 ```
 
 Where:
@@ -89,5 +93,24 @@ This will invoke the command `python` with the arguments `app.py {data}/{proc}` 
 ### Analysis
 Analysis will perform the following steps:
 - Read input data from the input.tsv file.
-- Perform Kaplan-Meier survival estimation analysis.
-- Write resulting data to `results.tsv` file.
+- Perform Kaplan-Meier survival estimation analysis with [scikit-survival](https://scikit-survival.readthedocs.io/en/stable/api/generated/sksurv.nonparametric.kaplan_meier_estimator.html)
+- Perform a log rank test for significant differences between survival curves (if multiple datasets are present) using scikit-survival [compare_curves](https://scikit-survival.readthedocs.io/en/stable/api/generated/sksurv.compare.compare_survival.html)
+
+### Output files
+- `logrank_test.tsv` contains the results of the log rank test (chi squared statistic and p value)
+```tsv
+chi2	p
+0.06844903511251588	0.7936085131077181
+```
+- `result.tsv` the survival curves and 95% CIs for all datasets (dataset is indicated in the final column)
+```tsv
+time	survival_prob	conf_int_lower	conf_int_upper	dataset_id
+0.0	1.0	1.0	1.0	dataset1
+```
+NOTE: Each curve has an additional row comprising [0,1,1,dataset] prepended to it (for ease of plotting on the portal frontend). If the curve for a dataset covers rows 1-10 (excluding header) of the .tsv, take rows 2-10 to get the survival curve as estimated by scikit-survival.
+
+- `censored.tsv` contains the survival days for all censored observations
+```tsv
+donor_id	days_at_censoring	dataset_id
+M2A2TKEW	163.0	dataset
+```

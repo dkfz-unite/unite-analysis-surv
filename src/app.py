@@ -54,12 +54,12 @@ def get_survival_days(data : pd.DataFrame) -> pd.Series:
     """Get the number of days survival from the data frame.
     
     :param data: the input data frame
-    :return: pd.DataFrame
+    :return: pd.Series
     """
     
 
     # initialise data frame
-    survival_days = pd.Series(index=range(len(data)),name="survival_days",dtype=float)
+    survival_days = pd.Series(index=data.index,name="survival_days",dtype=float)
     # try to get survival days from the dates
     s1,success = get_survival_days_from_dates(data)
     survival_days.iloc[np.array(success)]=s1.iloc[np.array(success)]
