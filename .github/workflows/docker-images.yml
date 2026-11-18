@@ -58,12 +58,14 @@ jobs:
       - name: Make web app executable
         run: chmod a+rx ./app/commands
       - name: Build amd64 image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           docker build \
             --platform linux/amd64 \
             -t ${{ env.REGISTRY }}/${{ env.IMAGE }}:amd64 \
             --build-arg USER=${{ github.actor }} \
-            --build-arg TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            --secret id=github_token,env=GITHUB_TOKEN \
             .
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE }}:amd64
   build-arm64:
@@ -90,12 +92,14 @@ jobs:
       - name: Make web app executable
         run: chmod a+rx ./app/commands
       - name: Build arm64 image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           docker build \
             --platform linux/arm64 \
             -t ${{ env.REGISTRY }}/${{ env.IMAGE }}:arm64 \
             --build-arg USER=${{ github.actor }} \
-            --build-arg TOKEN=${{ secrets.GITHUB_TOKEN }} \
+            --secret id=github_token,env=GITHUB_TOKEN \
             .
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE }}:arm64
   create-manifest:
